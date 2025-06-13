@@ -1,14 +1,16 @@
 <template>
-  <div class="flex gap-2 mb-6">
-    <input
-      v-model="keyword"
-      placeholder="Masukkan Kota, contoh: Jakarta"
-      class="flex-1 border rounded p-2"
-    />
-    <button @click="submit" class="px-4 py-2 bg-blue-600 text-white rounded">
-      Cari
-    </button>
-  </div>
+  <form @submit.prevent="submit" class="d-flex justify-content-center mb-4">
+    <div class="input-group" style="max-width: 600px; width: 100%;">
+      <input
+        v-model="keyword"
+        type="text"
+        class="form-control"
+        placeholder="Contoh: jakarta, air terjun, pantai"
+        required
+      />
+      <button type="submit" class="btn btn-primary">Cari</button>
+    </div>
+  </form>
 </template>
 
 <script>
@@ -18,7 +20,7 @@ export default {
   },
   methods: {
     submit() {
-      this.$emit('submit', this.keyword)
+      this.$emit('submit', this.keyword.trim())
     }
   }
 }
