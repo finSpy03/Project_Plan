@@ -18,19 +18,27 @@ app.add_middleware(
 )
 
 # --- Load & gabungkan data wisata dan rating --- #
-# Pastikan file-file CSV ini ada di folder 'data/' di backend
 try:
     df_place = pd.read_csv("data/tourism_with_id.csv")
     df_rating = pd.read_csv("data/tourism_rating.csv")
 
-    # Gabungkan rata-rata rating ke data tempat wisata
+    # Gabungkan rata-rata rating
     avg_rating = df_rating.groupby("Place_Id")["Place_Ratings"].mean().reset_index()
     df_place = df_place.merge(avg_rating, on="Place_Id", how="left")
+
+    # Isi nilai kosong agar tidak error saat pencarian
+    df_place["City"].fillna("", inplace=True)
+    df_place["Place_Name"].fillna("", inplace=True)
+    df_place["Place_Ratings"].fillna(0, inplace=True)
+
+    # ✅ Tambahan log: tampilkan daftar kota yang tersedia
+    print("KOTA YANG TERSEDIA:", df_place["City"].unique())
+
 except Exception as e:
     print("Gagal memuat data:", e)
     df_place = pd.DataFrame(columns=["Place_Id", "Place_Name", "City", "Place_Ratings"])
 
-# Load model rekomendasi dan encoder
+# --- Load model rekomendasi dan encoder --- #
 try:
     model = tf.keras.models.load_model("app/model/recommendation_model.h5")
     user_encoder = joblib.load("app/model/user_encoder.pkl")
@@ -69,14 +77,18 @@ def recommend_by_location(
     if df_place.empty:
         return {"error": "Data belum tersedia"}
 
-    # Filter berdasarkan nama kota yang cocok dengan input pengguna
-    mask = df_place["City"].str.contains(q, case=False, na=False)
+    # Filter berdasarkan nama kota yang cocok
+    mask = df_place["City"].str.contains(q, case=False, na=False) | \
+           df_place["Place_Name"].str.contains(q, case=False, na=False)
     result = df_place[mask]
 
-    # Urutkan berdasarkan rating tertinggi dan ambil top_n
+    # Urutkan berdasarkan rating tertinggi
     top_places = result.sort_values("Place_Ratings", ascending=False).head(top_n)
 
-    # Pilih kolom yang ingin dikembalikan ke frontend
+    # Log hasil pencarian ke terminal
+    print("Pencarian:", q, "| Ditemukan:", len(top_places))
+
+    # Pilih kolom untuk frontend
     output = top_places[["Place_Id", "Place_Name", "City", "Place_Ratings"]]
 
     return output.to_dict(orient="records")

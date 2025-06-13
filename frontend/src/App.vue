@@ -1,7 +1,9 @@
 <template>
   <div class="p-8 max-w-xl mx-auto">
-    <h1 class="text-2xl font-bold mb-4">Sistem Rekomendasi Wisata Berdasarkan Lokasi atau Nama Tempat</h1>
+    <h1 class="text-2xl font-bold mb-4">Sistem Rekomendasi Wisata Berdasarkan User ID</h1>
     <InputForm @submit="fetchRecommendations" />
+    <p v-if="isLoading">🔄 Memuat rekomendasi...</p>
+    <p v-if="errorMessage" class="text-red-500">{{ errorMessage }}</p>
     <RecommendationList :places="recommendedPlaces" />
   </div>
 </template>
@@ -14,20 +16,29 @@ export default {
   components: { InputForm, RecommendationList },
   data() {
     return {
-      recommendedPlaces: []
+      recommendedPlaces: [],
+      isLoading: false,
+      errorMessage: ''
     }
   },
   methods: {
-    async fetchRecommendations(keyword) {
+    async fetchRecommendations(userId) {
+      this.isLoading = true
+      this.errorMessage = ''
       try {
-        const res = await fetch(
-          `http://127.0.0.1:8000/recommend/location?q=${encodeURIComponent(keyword)}&top_n=5`
-        )
+        const res = await fetch("http://localhost:8000/recommend", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: userId, top_n: 5 })
+        })
         const data = await res.json()
         this.recommendedPlaces = data
       } catch (err) {
         console.error('Gagal mengambil rekomendasi:', err)
+        this.errorMessage = 'Gagal mengambil data. Coba lagi.'
         this.recommendedPlaces = []
+      } finally {
+        this.isLoading = false
       }
     }
   }
