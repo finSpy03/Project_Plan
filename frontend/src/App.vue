@@ -67,7 +67,7 @@ export default {
         if (this.kategoriAktif !== 'Semua') {
           params.append('category', this.kategoriAktif)
         }
-        const res = await fetch(`http://localhost:8000/recommend/location?${params.toString()}`)
+        const res = await fetch(`https://silverBullet00-wisata-backend.hf.space/recommend/location?${params.toString()}`)
         if (!res.ok) throw new Error('Respon tidak OK')
         const data = await res.json()
         this.recommendedPlaces = data
